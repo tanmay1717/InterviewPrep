@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Interview Prep Tracker</title>
+  <link rel="stylesheet" href="popup.css" />
+  <script src="theme.js"></script>
+</head>
+<body>
+  <div class="header">
+    <div class="header-text">
+      <h1>Interview Prep</h1>
+      <div id="header-sub" class="header-sub"></div>
+    </div>
+    <button class="theme-btn" id="theme-btn" type="button" title="Switch theme" aria-label="Switch to light theme">
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    </button>
+    <button id="account-chip" class="account-chip" title="Account & friends">Sign in</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="dashboard">Home</button>
+    <button class="tab-btn" data-tab="practice">Practice</button>
+    <button class="tab-btn" data-tab="studyplan">Plan</button>
+    <button class="tab-btn" data-tab="friends">Friends</button>
+    <button class="tab-btn" data-tab="applications">Apps</button>
+    <button class="tab-btn" data-tab="resources">Links</button>
+  </div>
+
+  <div id="dashboard" class="tab-content active">
+    <div id="dashboard-content">Loading...</div>
+  </div>
+
+  <div id="practice" class="tab-content">
+    <div class="segmented">
+      <button class="seg-btn active" data-seg="coding">Coding</button>
+      <button class="seg-btn" data-seg="sd">System Design</button>
+    </div>
+
+    <div id="seg-coding" class="seg-pane active">
+      <div id="coding-summary" class="summary-card"></div>
+      <div class="filters">
+        <input type="search" id="pf-search" placeholder="Search problems..." />
+        <select id="pf-diff">
+          <option value="">All levels</option>
+          <option value="E">Easy</option>
+          <option value="M">Medium</option>
+          <option value="H">Hard</option>
+        </select>
+        <select id="pf-status">
+          <option value="">All</option>
+          <option value="todo">Unsolved</option>
+          <option value="done">Solved</option>
+        </select>
+      </div>
+      <div id="coding-list"></div>
+    </div>
+
+    <div id="seg-sd" class="seg-pane">
+      <div id="sd-summary" class="summary-card"></div>
+      <div id="sd-list"></div>
+    </div>
+  </div>
+
+  <div id="studyplan" class="tab-content">
+    <div id="studyplan-list"></div>
+  </div>
+
+  <div id="friends" class="tab-content">
+    <div id="friends-content"></div>
+  </div>
+
+  <div id="applications" class="tab-content">
+    <div class="section-actions">
+      <button id="add-application-btn" class="btn btn-primary">+ Add manually</button>
+      <button id="sync-gmail-btn" class="btn">Sync Gmail now</button>
+      <button id="connect-gmail-btn" class="btn btn-secondary">Connect Gmail</button>
+    </div>
+    <div id="add-application-form" class="add-form hidden">
+      <input type="text" id="af-company" placeholder="Company" />
+      <input type="text" id="af-position" placeholder="Position" />
+      <input type="date" id="af-date" />
+      <select id="af-status">
+        <option>Applied</option>
+        <option>OA</option>
+        <option>Phone Screen</option>
+        <option>Onsite</option>
+        <option>Offer</option>
+        <option>Rejected</option>
+      </select>
+      <div class="add-form-actions">
+        <button id="af-save" class="btn btn-primary">Save</button>
+        <button id="af-cancel" class="btn">Cancel</button>
+      </div>
+    </div>
+    <p class="hint web-only">Gmail auto-detection and daily reminders are available in the Chrome extension. On the web, add applications manually.</p>
+    <div id="applications-list"></div>
+  </div>
+
+  <div id="resources" class="tab-content">
+    <div id="resources-list"></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="studyplan.js"></script>
+  <script src="problems.js"></script>
+  <script src="calendar.js"></script>
+  <script src="cloud.js"></script>
+  <script src="core.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

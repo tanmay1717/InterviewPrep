@@ -1,0 +1,58 @@
+:root {
+  --bg: #f5f6f4;
+  --surface: #ffffff;
+  --border: #e1e4e1;
+  --ink: #182521;
+  --ink-soft: #5b6660;
+  --accent: #1f6f5c;
+  --accent-soft: #e4f0ec;
+  --gold: #b8862e;
+  --danger: #b3411f;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  font-family: var(--sans);
+  color: var(--ink);
+}
+.wrap { max-width: 560px; margin: 0 auto; padding: 28px 20px 60px; }
+h1 { font-size: 20px; margin-bottom: 18px; }
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); margin: 0 0 12px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.card.danger { border-color: var(--danger); }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; margin-bottom: 12px; }
+.field-inline { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; }
+input[type="time"], select, textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  font-family: var(--sans);
+  font-size: 13px;
+  background: var(--bg);
+}
+textarea { resize: vertical; font-family: var(--mono); font-size: 12px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-secondary { background: var(--gold); border-color: var(--gold); color: #fff; }
+.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.hint { font-size: 12px; color: var(--ink-soft); line-height: 1.5; margin: 8px 0 0; }
+.status-msg { font-size: 12.5px; color: var(--accent); font-weight: 600; min-height: 18px; }

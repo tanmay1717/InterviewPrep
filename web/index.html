@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Interview Prep Tracker</title>
+  <meta name="description" content="90-day DSA calendar, system design roadmap, and progress tracking with friends." />
+  <meta name="theme-color" content="#1C1612" />
+  <link rel="icon" href="icon.png" />
+  <link rel="stylesheet" href="app.css" />
+  <script>
+    // Apply the saved theme before first paint so the page doesn't flash the wrong colours.
+    try { if (localStorage.getItem("theme") === "light") document.documentElement.dataset.theme = "light"; } catch (e) {}
+  </script>
+  <script src="web-shim.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-in">
+      <a class="brand" href="#calendar">Interview Prep</a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#calendar" data-page="calendar">DSA Calendar</a>
+        <a href="#system-design" data-page="system-design">System Design</a>
+        <a href="#friends" data-page="friends">Friends</a>
+        <a href="#applications" data-page="applications">Applications</a>
+        <a href="#resources" data-page="resources">Resources</a>
+      </nav>
+      <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to light theme" title="Switch theme">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <a class="account-btn" id="account-btn" href="#friends">Sign in</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- 90-day calendar -->
+    <section class="page" id="page-calendar">
+      <div class="top">
+        <span class="eyebrow">DSA Prep</span>
+        <h1>90 Days DSA Calendar</h1>
+        <p class="sub">One topic-wise problem set a day, with built-in breather days and revision days so concepts actually stick. Click any problem to open it on LeetCode, or click the pattern name to learn the underlying concept first. Use “+ Add question” on any day to practise extra problems.</p>
+      </div>
+      <div class="legend">
+        <span><span class="dot dot-learn"></span>Learning day</span>
+        <span><span class="dot dot-revision"></span>Revision day</span>
+        <span><span class="dot dot-breather"></span>Breather day</span>
+        <span><span class="dot dot-mock"></span>Mock interview</span>
+        <span class="legend-right" id="cal-meta"></span>
+      </div>
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" id="cal-fill"></div></div>
+        <div class="progress-label" id="cal-label">0 / 90 days</div>
+      </div>
+      <div id="calendar"></div>
+    </section>
+
+    <!-- System design -->
+    <section class="page" id="page-system-design">
+      <div class="top">
+        <span class="eyebrow">System Design · Beginner roadmap</span>
+        <h1>System Design in 11 Weeks</h1>
+        <p class="sub">Work through one week of concepts at a time, watch the linked videos, then practise the classic interview problems. Tick each topic once you can explain it without notes.</p>
+      </div>
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" id="sd-fill"></div></div>
+        <div class="progress-label" id="sd-label"></div>
+      </div>
+      <div id="sd-content"></div>
+    </section>
+
+    <!-- Friends -->
+    <section class="page" id="page-friends">
+      <div class="top">
+        <span class="eyebrow">Study together</span>
+        <h1>Friends</h1>
+        <p class="sub">Sign in to sync your progress across devices and see how your friends are doing. Friends see your study progress, never anything about your applications.</p>
+      </div>
+      <div id="friends-content"></div>
+    </section>
+
+    <!-- Applications -->
+    <section class="page" id="page-applications">
+      <div class="top">
+        <span class="eyebrow">Job search</span>
+        <h1>Applications</h1>
+        <p class="sub">Keep track of where you've applied. These stay on this device and are never shared with friends. Gmail auto-detection is available in the Chrome extension.</p>
+      </div>
+      <form class="panel app-form" id="app-form">
+        <input id="af-company" placeholder="Company" required />
+        <input id="af-position" placeholder="Position" />
+        <input id="af-date" type="date" />
+        <select id="af-status"></select>
+        <button class="btn btn-primary" type="submit">Add</button>
+      </form>
+      <div id="apps-list"></div>
+    </section>
+
+    <!-- Resources -->
+    <section class="page" id="page-resources">
+      <div class="top">
+        <span class="eyebrow">Free material</span>
+        <h1>Resources</h1>
+        <p class="sub">Hand-picked links for coding, design, and company-wise question lists. Add your own favourites too - they sync with your account.</p>
+      </div>
+      <form class="panel res-form" id="res-form">
+        <div class="label-sm">Add a resource</div>
+        <div class="res-form-row">
+          <input id="res-group" list="res-groups" placeholder="Section (pick or type a new one)" aria-label="Section" />
+          <input id="res-name" placeholder="Title" aria-label="Title" />
+          <input id="res-url" type="url" placeholder="https://..." aria-label="Link" required />
+          <button class="btn btn-primary" type="submit">Add</button>
+        </div>
+        <datalist id="res-groups"></datalist>
+        <div class="msg" id="res-msg"></div>
+      </form>
+      <div id="resources-content" class="res-grid"></div>
+    </section>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script src="studyplan.js"></script>
+  <script src="problems.js"></script>
+  <script src="calendar.js"></script>
+  <script src="cloud.js"></script>
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
