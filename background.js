@@ -247,7 +247,9 @@ async function syncGmail() {
   await chrome.storage.local.set({
     applications,
     processedMessageIds: Array.from(processed),
-    lastSyncTimestamp: new Date().toISOString()
+    lastSyncTimestamp: new Date().toISOString(),
+    // New finds sync to your account the next time the popup opens.
+    ...(newCount > 0 ? { appsUpdatedAt: new Date().toISOString() } : {})
   });
 
   if (newCount > 0) {

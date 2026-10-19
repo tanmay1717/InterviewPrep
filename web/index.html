@@ -24,12 +24,21 @@
         <a href="#friends" data-page="friends">Friends</a>
         <a href="#applications" data-page="applications">Applications</a>
         <a href="#resources" data-page="resources">Resources</a>
+        <a href="#extension" data-page="extension">Extension</a>
       </nav>
       <button class="theme-btn" id="theme-btn" type="button" aria-label="Switch to light theme" title="Switch theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-      <a class="account-btn" id="account-btn" href="#friends" title="Your account"></a>
+      <div class="account">
+        <button class="account-btn" id="account-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="account-menu"></button>
+        <div class="account-menu" id="account-menu" role="menu" hidden>
+          <div class="account-head"><b id="am-user"></b><span id="am-email"></span></div>
+          <a href="#friends" role="menuitem">Friends &amp; leaderboard</a>
+          <a href="#extension" role="menuitem">Get the extension</a>
+          <button type="button" role="menuitem" id="am-signout" class="am-signout">Sign out</button>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -52,9 +61,10 @@
         <li><span class="dot dot-learn"></span><div><b>90 Days DSA Calendar</b><span>Topic-wise problem sets with revision, breather and mock days.</span></div></li>
         <li><span class="dot dot-revision"></span><div><b>System Design roadmap</b><span>Week-by-week concepts with a learn link for every topic.</span></div></li>
         <li><span class="dot dot-breather"></span><div><b>Study with friends</b><span>Add friends by username and compare progress on a leaderboard.</span></div></li>
-        <li><span class="dot dot-mock"></span><div><b>Private by default</b><span>Your progress is yours. Applications never leave your device.</span></div></li>
+        <li><span class="dot dot-mock"></span><div><b>Private by default</b><span>Your progress is yours. Applications are private to you - friends never see them.</span></div></li>
     </ul>
     <div class="auth-slot" id="auth-slot"></div>
+    <p class="auth-ext">Prefer it in your toolbar? <a href="interview-prep-extension.zip" download>Download the Chrome extension</a></p>
   </section>
 
   <main class="wrap">
@@ -108,7 +118,7 @@
       <div class="top">
         <span class="eyebrow">Job search</span>
         <h1>Applications</h1>
-        <p class="sub">Keep track of where you've applied. These stay on this device and are never shared with friends. Gmail auto-detection is available in the Chrome extension.</p>
+        <p class="sub">Keep track of where you've applied. Synced privately to your account so they're on every device - friends never see any of it. Gmail auto-detection is available in the Chrome extension.</p>
       </div>
       <form class="panel app-form" id="app-form">
         <input id="af-company" placeholder="Company" required />
@@ -139,6 +149,42 @@
         <div class="msg" id="res-msg"></div>
       </form>
       <div id="resources-content" class="res-grid"></div>
+    </section>
+
+    <!-- Chrome extension download -->
+    <section class="page" id="page-extension">
+      <div class="top">
+        <span class="eyebrow">Browser extension</span>
+        <h1>Get the Chrome extension</h1>
+        <p class="sub">Your next calendar day one click away in the toolbar, plus things a website can't do: Gmail application detection and a daily reminder. It signs in with this same account, so everything stays in sync.</p>
+      </div>
+
+      <div class="ext-layout">
+        <div class="panel ext-download">
+          <div class="ext-icon"><img src="icon.png" alt="" width="48" height="48" /></div>
+          <div class="ext-meta">
+            <b>Interview Prep Tracker</b>
+            <span id="ext-info">Chrome · Edge · Brave · Arc</span>
+          </div>
+          <a class="btn btn-primary btn-lg" id="ext-download" href="interview-prep-extension.zip" download>Download extension (.zip)</a>
+        </div>
+
+        <ol class="steps">
+          <li><b>Unzip the download.</b><span>You'll get a folder called <code>interview-prep-extension</code>. Move it somewhere it can stay, like Documents - Chrome loads the extension from it.</span></li>
+          <li><b>Open the extensions page.</b><span>Paste this into the address bar:
+            <span class="copy-row"><code id="ext-url">chrome://extensions</code><button class="btn btn-xs" type="button" id="ext-copy">Copy</button></span>
+            (Edge: <code>edge://extensions</code>, Brave: <code>brave://extensions</code>.)</span></li>
+          <li><b>Turn on Developer mode.</b><span>It's the switch in the top-right corner of that page.</span></li>
+          <li><b>Click “Load unpacked”.</b><span>Choose the <code>interview-prep-extension</code> folder from step 1.</span></li>
+          <li><b>Pin it and sign in.</b><span>Click the puzzle-piece icon in the toolbar, pin Interview Prep, open it, and sign in on its Friends tab with this account.</span></li>
+        </ol>
+      </div>
+
+      <div class="ext-notes">
+        <div class="panel"><h3>Updating</h3><p>Download again, replace the old folder with the new one, then click the reload icon ↻ on the extension's card in <code>chrome://extensions</code>. Your progress is safe - it's stored in your account.</p></div>
+        <div class="panel"><h3>Why “Developer mode”?</h3><p>Extensions from outside the Chrome Web Store install this way. It's the same code this site runs - Chrome just shows a small reminder that it's loaded from a folder.</p></div>
+        <div class="panel"><h3>Gmail detection</h3><p>Optional and off until it's set up for this site. Everything else - calendar, system design, friends and sync - works straight away.</p></div>
+      </div>
     </section>
 
   </main>

@@ -190,6 +190,7 @@ async function syncOnOpen() {
   if (!session) return;
   try {
     let d = await getAll();
+    const previousUser = d.syncedUserId;
     if (!d.profile) await Cloud.getMyProfile();
     const remote = await Cloud.pullProgress();
     d = await getAll();
@@ -223,9 +224,49 @@ async function syncOnOpen() {
     }
     // Older versions uploaded application counts; overwrite them with a copy that has none.
     if (remote && remote.data && ("appCount" in remote.data || "appStatus" in remote.data)) await queuePush();
+    await syncApplications(previousUser, session.user.id);
   } catch (e) {
     console.warn("Sync failed:", e);
   }
+}
+
+// ---------- Applications sync (private to you, never part of what friends receive) ----------
+// Same rules as progress: newest copy wins; the first sign-in on a device merges in applications
+// already saved there, unless the device was last used by a different account.
+async function syncApplications(previousUser, userId) {
+  const remote = await Cloud.pullApplications();
+  const remoteApps = (remote && remote.data && remote.data.applications) || [];
+  const d = await getAll();
+  if (previousUser !== userId) {
+    const local = previousUser ? [] : (d.applications || []);
+    const ids = new Set(remoteApps.map((a) => a.id));
+    await setKeys({ applications: [...remoteApps, ...local.filter((a) => !ids.has(a.id))], appsUpdatedAt: new Date().toISOString() });
+    await queueAppsPush();
+  } else if (remote && (!d.appsUpdatedAt || Date.parse(remote.updated_at) > Date.parse(d.appsUpdatedAt))) {
+    await setKeys({ applications: remoteApps, appsUpdatedAt: remote.updated_at });
+  } else if (d.appsUpdatedAt && (!remote || Date.parse(d.appsUpdatedAt) > Date.parse(remote.updated_at))) {
+    await queueAppsPush();
+  }
+}
+
+let appsPushChain = Promise.resolve();
+function queueAppsPush() {
+  appsPushChain = appsPushChain.then(async () => {
+    if (!Cloud.isConfigured() || !(await Cloud.getSession())) return;
+    const d = await getAll();
+    try {
+      await Cloud.pushApplications(d.applications || [], d.appsUpdatedAt || new Date().toISOString());
+    } catch (e) {
+      console.warn("Applications push failed (will retry next open):", e);
+    }
+  });
+  return appsPushChain;
+}
+
+// Call after any change to the applications list.
+async function markAppsChanged() {
+  await setKeys({ appsUpdatedAt: new Date().toISOString() });
+  queueAppsPush();
 }
 
 async function updateSyncLabel() {

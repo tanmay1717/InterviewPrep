@@ -4,6 +4,38 @@ async function renderAccountChip() {
   const { profile } = await chrome.storage.local.get("profile");
   chip.textContent = session ? `@${(profile && profile.username) || session.user.email.split("@")[0]}` : "Sign in";
   chip.classList.toggle("signed-in", !!session);
+  $("am-user").textContent = chip.textContent;
+  $("am-email").textContent = session ? ((profile && profile.email) || session.user.email || "") : "";
+}
+
+// Account menu: signed in -> @username opens a menu with Sign out; signed out -> go to sign in.
+function setAccountMenu(open) {
+  $("account-menu").hidden = !open;
+  $("account-chip").setAttribute("aria-expanded", String(open));
+}
+
+async function popupSignOut() {
+  setAccountMenu(false);
+  await Cloud.signOut();
+  friendsState.authMode = "signin";
+  switchTab("friends");
+  renderAll();
+}
+
+function initAccountMenu() {
+  $("account-chip").addEventListener("click", async (e) => {
+    e.stopPropagation();
+    if (!(Cloud.isConfigured() && (await Cloud.getSession()))) return switchTab("friends");
+    setAccountMenu($("account-menu").hidden);
+  });
+  $("am-friends").addEventListener("click", () => { setAccountMenu(false); switchTab("friends"); });
+  $("am-signout").addEventListener("click", popupSignOut);
+  document.addEventListener("click", (e) => {
+    if (!$("account-menu").hidden && !e.target.closest(".account")) setAccountMenu(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("account-menu").hidden) setAccountMenu(false);
+  });
 }
 
 // ---------- Tabs ----------
@@ -17,7 +49,7 @@ function initTabs() {
   document.querySelectorAll(".tab-btn").forEach((btn) => {
     btn.addEventListener("click", () => switchTab(btn.dataset.tab));
   });
-  $("account-chip").addEventListener("click", () => switchTab("friends"));
+  initAccountMenu();
 }
 
 // ---------- Dashboard ----------
@@ -313,7 +345,9 @@ function renderAuthForm(el) {
         <button class="seg-btn ${signup ? "active" : ""}" data-mode="signup">Create account</button>
       </div>
       <form id="auth-form" class="auth-form">
-        <input type="email" id="auth-email" placeholder="Email" required autocomplete="email" />
+        ${signup
+          ? `<input type="email" id="auth-email" placeholder="Email" required autocomplete="email" />`
+          : `<input type="text" id="auth-email" placeholder="Email or username" required autocomplete="username" autocapitalize="none" spellcheck="false" />`}
         <input type="password" id="auth-password" placeholder="Password (min 8 chars)" required minlength="8"
           autocomplete="${signup ? "new-password" : "current-password"}" />
         ${signup ? `<input type="text" id="auth-username" placeholder="Username (friends add you by this)" required />` : ""}
@@ -385,8 +419,7 @@ async function renderFriends() {
   updateSyncLabel();
 
   $("fr-signout").addEventListener("click", async () => {
-    await Cloud.signOut();
-    renderAll();
+    await popupSignOut();
   });
   $("fr-refresh").addEventListener("click", async () => {
     await syncOnOpen();
@@ -591,7 +624,7 @@ async function renderApplications() {
       if (idx >= 0) {
         apps[idx][field] = e.target.value;
         await setKeys({ applications: apps });
-        await markChanged();
+        await markAppsChanged();
       }
     });
   });
@@ -604,7 +637,7 @@ async function renderApplications() {
       const idx = apps.findIndex((a) => a.id === id);
       if (idx >= 0) apps[idx].confirmed = true;
       await setKeys({ applications: apps });
-      await markChanged();
+      await markAppsChanged();
       renderApplications();
       renderDashboard();
     });
@@ -616,14 +649,24 @@ async function renderApplications() {
       const d = await getAll();
       const apps = (d.applications || []).filter((a) => a.id !== id);
       await setKeys({ applications: apps });
-      await markChanged();
+      await markAppsChanged();
       renderApplications();
       renderDashboard();
     });
   });
 }
 
+// Gmail detection only shows once a Google client ID is configured for this extension.
+function gmailAvailable() {
+  const oauth = chrome.runtime.getManifest().oauth2;
+  return !!(oauth && oauth.client_id && !oauth.client_id.includes("PASTE_YOUR"));
+}
+
 function initApplicationControls() {
+  if (!gmailAvailable()) {
+    $("sync-gmail-btn").hidden = true;
+    $("connect-gmail-btn").hidden = true;
+  }
   const form = $("add-application-form");
   $("add-application-btn").addEventListener("click", () => {
     form.classList.toggle("hidden");
@@ -648,7 +691,7 @@ function initApplicationControls() {
     const apps = d.applications || [];
     apps.push(newApp);
     await setKeys({ applications: apps });
-    await markChanged();
+    await markAppsChanged();
     ["af-company", "af-position", "af-date"].forEach((id) => ($(id).value = ""));
     form.classList.add("hidden");
     renderApplications();
@@ -674,7 +717,7 @@ function initApplicationControls() {
   $("connect-gmail-btn").addEventListener("click", () => {
     chrome.identity.getAuthToken({ interactive: true }, (token) => {
       if (chrome.runtime.lastError || !token) {
-        alert("Gmail connection failed. Make sure you've completed the Google Cloud OAuth setup in the README.");
+        alert("Couldn't connect to Gmail. Please try again.");
         return;
       }
       chrome.runtime.sendMessage({ type: "SYNC_NOW" }, () => {

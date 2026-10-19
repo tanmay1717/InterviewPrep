@@ -1,5 +1,5 @@
 {
   "framework": null,
-  "buildCommand": "node scripts/build-web.mjs",
+  "buildCommand": "SITE_URL=https://interviewprep.tanmayshetty.com node scripts/build-web.mjs",
   "outputDirectory": "public"
 }

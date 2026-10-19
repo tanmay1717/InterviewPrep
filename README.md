@@ -67,7 +67,7 @@ Reload the extension after editing.
 
 All data is stored locally via `chrome.storage.local` (or `localStorage` on the website). Without signing in, the only network calls are directly from your browser to `gmail.googleapis.com` using your own OAuth token.
 
-If you sign in (section 7), your study-plan checklist, 90-day calendar, solved problems, system-design checklist, and any questions or resources you added are saved to your Neon database through your Vercel server. Only you and friends you've accepted can read them - the server checks your login token on every request. Applications never leave your machine - not the companies, not the statuses, not even how many you have. Passwords are stored as salted scrypt hashes. To wipe local data, go to **Options > Reset > Clear all data**, or just remove the extension.
+If you sign in (section 7), your study-plan checklist, 90-day calendar, solved problems, system-design checklist, and any questions or resources you added are saved to your Neon database through your Vercel server. Only you and friends you've accepted can read them - the server checks your login token on every request. Your job applications are also saved to your account so they appear on every device, but in a separate private table that only you can read - friends never see the companies, the statuses, or even how many you have. Without signing in, applications stay on the device where you added them. Passwords are stored as salted scrypt hashes. To wipe local data, go to **Options > Reset > Clear all data**, or just remove the extension.
 
 ## 7. Hosting: website + login + friends (Vercel + Neon)
 
@@ -75,7 +75,7 @@ If you sign in (section 7), your study-plan checklist, 90-day calendar, solved p
 Browser / extension  -->  Vercel (website + api/*.js)  -->  Neon Postgres
 ```
 
-The **website** (`web/`) is a full-page version built around the 90 Days DSA Calendar, plus the System Design roadmap, Friends, Applications and Resources. It has no Gmail auto-detection or daily reminders (those need the extension). The **extension** uses the same server, so progress syncs between both. Run it locally with `npm run dev` (http://localhost:3000).
+The **website** (`web/`) is a full-page version built around the 90 Days DSA Calendar, plus the System Design roadmap, Friends, Applications and Resources. It has no Gmail auto-detection or daily reminders (those need the extension). The **extension** uses the same server, so progress and applications sync between both. Run it locally with `npm run dev` (http://localhost:3000).
 
 ### One-time setup (one person does this)
 
@@ -113,7 +113,7 @@ The **website** (`web/`) is a full-page version built around the 90 Days DSA Cal
 2. Each of you: **Friends** tab > **Create account** (pick a username).
 3. One of you types the other's username > **Add friend**; the other clicks **Accept**. You'll see each other on the leaderboard and can **Compare** pattern by pattern.
 
-**Sync behaviour:** progress is saved every time you check something and pulled when you open the app. The first sign-in on a new machine merges that machine's progress with your account; after that the most recent change wins. Applications themselves stay on the machine where they were added.
+**Sync behaviour:** progress is saved every time you check something and pulled when you open the app. The first sign-in on a new machine merges that machine's progress with your account; after that the most recent change wins. Applications sync the same way, privately to your account (applications found by Gmail auto-detection sync the next time you open the popup). If someone else signs in on a device, they start with their own data - nothing from the previous account carries over.
 
 **Project layout:** extension files live in the root (load this folder unpacked as before). `api/` and `lib/` are the Vercel server functions, `db/schema.sql` is the database, `web/` is the website UI, `core.js` holds the stats/sync logic shared by the popup and the website, `calendar.js` is the 90-day plan, and `scripts/build-web.mjs` builds the site into `public/` on each deploy. When zipping the extension for the Chrome Web Store, leave out `api/`, `lib/`, `db/`, `scripts/`, `web/`, `node_modules/` and `.env`.
 # InterviewPrep

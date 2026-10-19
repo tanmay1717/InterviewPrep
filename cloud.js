@@ -68,8 +68,9 @@ const Cloud = (() => {
     return { needsConfirmation: false };
   }
 
-  async function signIn(email, password) {
-    return saveSession(await call("/api/auth", { method: "POST", auth: false, body: { action: "signin", email, password } }));
+  // login can be an email or a username.
+  async function signIn(login, password) {
+    return saveSession(await call("/api/auth", { method: "POST", auth: false, body: { action: "signin", login, password } }));
   }
 
   // Keeps "syncedUserId" on purpose: if someone else signs in next on this device,
@@ -90,6 +91,11 @@ const Cloud = (() => {
     call("/api/progress", { method: "PUT", body: { data, updated_at: updatedAt } });
   const friendsProgress = () => call("/api/progress?friends=1");
 
+  // ---------- Applications (private: only ever your own) ----------
+  const pullApplications = () => call("/api/applications");
+  const pushApplications = (applications, updatedAt) =>
+    call("/api/applications", { method: "PUT", body: { applications, updated_at: updatedAt } });
+
   // ---------- Friends ----------
   const listFriendships = () => call("/api/friends");
   const sendFriendRequest = (username) => call("/api/friends", { method: "POST", body: { username } });
@@ -98,7 +104,7 @@ const Cloud = (() => {
 
   return {
     isConfigured, getSession, signUp, signIn, signOut, getMyProfile,
-    pullProgress, pushProgress, friendsProgress,
+    pullProgress, pushProgress, friendsProgress, pullApplications, pushApplications,
     listFriendships, sendFriendRequest, acceptFriend, removeFriendship
   };
 })();

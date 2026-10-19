@@ -6,7 +6,7 @@ const pad2 = (n) => String(n).padStart(2, "0");
 const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 
 // ---------- Routing ----------
-const PAGES = ["calendar", "system-design", "friends", "applications", "resources"];
+const PAGES = ["calendar", "system-design", "friends", "applications", "resources", "extension"];
 function showPage() {
   const page = PAGES.includes(location.hash.slice(1)) ? location.hash.slice(1) : "calendar";
   document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === `page-${page}`));
@@ -16,10 +16,36 @@ function showPage() {
 }
 
 async function renderAccount() {
-  const { profile } = await getAll();
+  const { profile, session } = await getAll();
+  const name = `@${(profile && profile.username) || "account"}`;
   const btn = $("account-btn");
-  btn.textContent = `@${(profile && profile.username) || "account"}`;
+  btn.textContent = name;
   btn.classList.add("signed-in");
+  $("am-user").textContent = name;
+  $("am-email").textContent = (profile && profile.email) || (session && session.user && session.user.email) || "";
+}
+
+// Account menu: opens from the @username button, closes on outside click, Esc, or choosing an item.
+function setAccountMenu(open) {
+  $("account-menu").hidden = !open;
+  $("account-btn").setAttribute("aria-expanded", String(open));
+}
+
+function initAccountMenu() {
+  $("account-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    setAccountMenu($("account-menu").hidden);
+  });
+  $("account-menu").addEventListener("click", (e) => {
+    if (e.target.closest("a, button")) setAccountMenu(false);
+  });
+  $("am-signout").addEventListener("click", signOutToAuth);
+  document.addEventListener("click", (e) => {
+    if (!$("account-menu").hidden && !e.target.closest(".account")) setAccountMenu(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("account-menu").hidden) { setAccountMenu(false); $("account-btn").focus(); }
+  });
 }
 
 // ---------- Sign-in gate ----------
@@ -55,7 +81,9 @@ async function enterApp() {
 }
 
 async function signOutToAuth() {
+  setAccountMenu(false);
   await Cloud.signOut();
+  friendsUi.mode = "signin"; // after signing out, offer "Sign in" rather than "Create account"
   friendsUi.open.clear();
   addingDay = null;
   history.replaceState(null, "", location.pathname);
@@ -274,7 +302,9 @@ function renderAuth(el) {
         <button data-mode="signup" class="${signup ? "active" : ""}">Create account</button>
       </div>
       <form class="stack" id="auth-form">
-        <input type="email" id="a-email" placeholder="Email" autocomplete="email" required />
+        ${signup
+          ? `<input type="email" id="a-email" placeholder="Email" autocomplete="email" required />`
+          : `<input type="text" id="a-email" placeholder="Email or username" autocomplete="username" autocapitalize="none" spellcheck="false" required />`}
         <input type="password" id="a-pass" placeholder="Password (min 8 characters)" minlength="8"
           autocomplete="${signup ? "new-password" : "current-password"}" required />
         ${signup ? `<input id="a-user" placeholder="Username - friends add you by this" required />` : ""}
@@ -419,7 +449,7 @@ async function renderApplications() {
   const update = async (id, fn) => {
     const d = await getAll();
     await setKeys({ applications: fn(d.applications || [], id) });
-    await markChanged();
+    await markAppsChanged();
   };
   $("apps-list").querySelectorAll(".app-row").forEach((row) => {
     const id = row.dataset.id;
@@ -449,7 +479,7 @@ function initApplications() {
       notes: ""
     });
     await setKeys({ applications: apps });
-    await markChanged();
+    await markAppsChanged();
     e.target.reset();
     renderApplications();
   };
@@ -490,6 +520,23 @@ function initResources() {
   };
 }
 
+// ---------- Extension download ----------
+async function initExtensionPage() {
+  $("ext-copy").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText($("ext-url").textContent);
+      $("ext-copy").textContent = "Copied";
+    } catch {
+      $("ext-copy").textContent = "Select & copy";
+    }
+    setTimeout(() => { $("ext-copy").textContent = "Copy"; }, 2000);
+  };
+  try {
+    const info = await (await fetch("extension.json", { cache: "no-store" })).json();
+    $("ext-info").textContent = `Version ${info.version} · ${Math.round(info.size / 1024)} KB · Chrome, Edge, Brave, Arc`;
+  } catch { /* keep the default text */ }
+}
+
 // ---------- Theme (dark "Espresso" by default, light "Terracotta & Sage") ----------
 function applyTheme(theme) {
   const light = theme === "light";
@@ -524,6 +571,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   initApplications();
   initResources();
+  initExtensionPage();
+  initAccountMenu();
   if (!(await Cloud.getSession())) return showAuth();
   await enterApp();       // show this account's saved data straight away
   await syncOnOpen();     // then pull the latest from the server

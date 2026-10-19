@@ -37,7 +37,7 @@ document.getElementById("save-gmail").addEventListener("click", async () => {
 document.getElementById("connect-gmail").addEventListener("click", () => {
   chrome.identity.getAuthToken({ interactive: true }, (token) => {
     if (chrome.runtime.lastError || !token) {
-      showStatus("Connection failed - check the README OAuth setup steps.");
+      showStatus("Couldn't connect to Gmail. Please try again.");
       return;
     }
     showStatus("Gmail connected.");
@@ -56,7 +56,11 @@ document.getElementById("clear-data").addEventListener("click", async () => {
   if (!confirm("This will permanently delete all tracked applications and study plan progress. Continue?")) return;
   await chrome.storage.local.clear();
   showStatus("All data cleared.");
-  load();
+  // Gmail detection only shows once a Google client ID is configured for this extension.
+const oauth = chrome.runtime.getManifest().oauth2;
+document.getElementById("gmail-card").hidden = !(oauth && oauth.client_id && !oauth.client_id.includes("PASTE_YOUR"));
+
+load();
 });
 
 load();

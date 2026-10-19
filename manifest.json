@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Interview Prep Tracker",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Track applications, a 9-week study plan, 150 coding problems and a system design roadmap - and compare progress with friends.",
   "permissions": ["storage", "alarms", "notifications", "identity"],
-  "host_permissions": ["https://gmail.googleapis.com/*", "https://*.vercel.app/*"],
+  "host_permissions": ["https://gmail.googleapis.com/*", "https://interviewprep.tanmayshetty.com/*", "https://*.vercel.app/*"],
   "background": {
     "service_worker": "background.js"
   },

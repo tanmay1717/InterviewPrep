@@ -1,3 +1,4 @@
+[hidden] { display: none !important; }
 :root {
   /* "Espresso" - warm dark theme (default), same palette as the website */
   color-scheme: dark;
@@ -103,6 +104,39 @@ code { font-family: var(--mono); font-size: 11px; background: var(--surface-2); 
   white-space: nowrap;
 }
 .account-chip.signed-in { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+/* Account menu (click the @username chip) */
+.account { position: relative; }
+.account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 210px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.55);
+  padding: 5px;
+  z-index: 40;
+  color: var(--ink);
+}
+.account-head { padding: 7px 9px 9px; border-bottom: 1px solid var(--border); margin-bottom: 3px; }
+.account-head b { display: block; font-size: 13px; }
+.account-head span { display: block; font-size: 11px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: none;
+  border: none;
+  padding: 7px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.account-menu button:hover, .account-menu button:focus-visible { background: var(--surface-2); }
+.account-menu .am-signout { color: var(--danger); border-top: 1px solid var(--border); border-radius: 0 0 6px 6px; margin-top: 3px; }
 .theme-btn {
   width: 28px;
   height: 28px;

@@ -19,7 +19,7 @@
       <p class="hint">Uses your computer's local time and Chrome notifications. Chrome must be running (it can be in the background) for the alarm to fire.</p>
     </section>
 
-    <section class="card">
+    <section class="card" id="gmail-card" hidden>
       <h2>Gmail auto-detection</h2>
       <label class="field-inline">
         <input type="checkbox" id="gmail-enabled" />
@@ -47,10 +47,6 @@
         Auto-detection is heuristic - it guesses the company from the sender and subject line, and every
         detected entry lands in the Applications tab as <em>pending review</em> until you confirm or dismiss it.
         Nothing is ever added to your tracker silently.
-      </p>
-      <p class="hint">
-        First-time setup requires a one-time Google Cloud OAuth configuration. See <code>README.md</code>
-        in the extension folder for step-by-step instructions.
       </p>
     </section>
 

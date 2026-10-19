@@ -1,6 +1,6 @@
 // GET  /api/auth?username=x                         -> { available }
 // POST /api/auth { action: "signup", email, password, username } -> { token, expiresIn, user, profile }
-// POST /api/auth { action: "signin", email, password }           -> same
+// POST /api/auth { action: "signin", login, password }           -> same   (login = email or username)
 import { q } from "../lib/db.js";
 import { hashPassword, verifyPassword, signToken } from "../lib/auth.js";
 import { body, methodNotAllowed, route, USERNAME_RE, EMAIL_RE } from "../lib/http.js";
@@ -25,10 +25,26 @@ export default route(async (req, res) => {
   if (req.method !== "POST") return methodNotAllowed(res, ["GET", "POST"]);
 
   const { action, password } = body(req);
-  const email = String(body(req).email || "").trim().toLowerCase();
-  if (!EMAIL_RE.test(email) || typeof password !== "string") {
-    return res.status(400).json({ error: "Enter a valid email and password" });
+  if (typeof password !== "string" || !password) return res.status(400).json({ error: "Enter your password" });
+
+  if (action === "signin") {
+    // Accepts an email or a username ("@name" works too). Same error either way, so it
+    // doesn't reveal which emails or usernames exist.
+    const login = String(body(req).login ?? body(req).email ?? "").trim().toLowerCase().replace(/^@/, "");
+    if (!login) return res.status(400).json({ error: "Enter your email or username" });
+    const byEmail = login.includes("@");
+    const rows = await q(
+      `select id, email, username, password_hash from users where ${byEmail ? "email" : "username"} = $1`,
+      [login]
+    );
+    if (!rows.length || !verifyPassword(password, rows[0].password_hash)) {
+      return res.status(401).json({ error: "Wrong email/username or password" });
+    }
+    return res.json(session(rows[0]));
   }
+
+  const email = String(body(req).email || "").trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: "Enter a valid email" });
 
   if (action === "signup") {
     const username = String(body(req).username || "").trim().toLowerCase();
@@ -46,14 +62,6 @@ export default route(async (req, res) => {
     );
     if (!rows.length) return res.status(409).json({ error: "Email or username already in use" });
     return res.status(201).json(session(rows[0]));
-  }
-
-  if (action === "signin") {
-    const rows = await q("select id, email, username, password_hash from users where email = $1", [email]);
-    if (!rows.length || !verifyPassword(password, rows[0].password_hash)) {
-      return res.status(401).json({ error: "Wrong email or password" });
-    }
-    return res.json(session(rows[0]));
   }
 
   return res.status(400).json({ error: "Unknown action" });

@@ -31,13 +31,16 @@ if (!process.env.DATABASE_URL) {
   dbLabel = "local Postgres in .localdb/ (set DATABASE_URL in .env to use Neon)";
 }
 
-execFileSync(process.execPath, [path.join(root, "scripts", "build-web.mjs")], { stdio: "inherit" });
+execFileSync(process.execPath, [path.join(root, "scripts", "build-web.mjs")], {
+  stdio: "inherit",
+  env: { ...process.env, SITE_URL: process.env.SITE_URL || `http://localhost:${PORT}` }
+});
 
 const handlers = {};
-for (const name of ["auth", "me", "progress", "friends"]) {
+for (const name of ["auth", "me", "progress", "friends", "applications"]) {
   handlers[name] = (await import(`../api/${name}.js`)).default;
 }
-const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".json": "application/json", ".zip": "application/zip" };
 const publicDir = path.join(root, "public");
 
 http.createServer(async (req, res) => {

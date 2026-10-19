@@ -29,3 +29,10 @@ create table if not exists progress (
   data jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+-- Job applications: private to their owner. Unlike "progress", friends can never read this.
+create table if not exists applications (
+  user_id uuid primary key references users(id) on delete cascade,
+  data jsonb not null default '{"applications": []}'::jsonb,
+  updated_at timestamptz not null default now()
+);
