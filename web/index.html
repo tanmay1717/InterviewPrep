@@ -14,7 +14,7 @@
   </script>
   <script src="web-shim.js"></script>
 </head>
-<body>
+<body class="booting">
   <header class="topbar">
     <div class="wrap topbar-in">
       <a class="brand" href="#calendar">Interview Prep</a>
@@ -29,9 +29,33 @@
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       </button>
-      <a class="account-btn" id="account-btn" href="#friends">Sign in</a>
+      <a class="account-btn" id="account-btn" href="#friends" title="Your account"></a>
     </div>
   </header>
+
+  <!-- Decorative background for the welcome screen (purely visual) -->
+  <div class="auth-bg" aria-hidden="true">
+    <div class="auth-dots"></div>
+    <div class="auth-glow glow-a"></div>
+    <div class="auth-glow glow-b"></div>
+    <div class="auth-heat" id="auth-heat"></div>
+  </div>
+
+  <!-- Shown until someone signs in: everything below is per-account -->
+  <section class="auth-screen wrap" id="auth-screen">
+    <div class="hero">
+      <span class="eyebrow">DSA · System Design · Friends</span>
+      <h1 class="hero-title">Your interview prep, one day at a time.</h1>
+      <p class="sub">A 90-day DSA calendar, an 11-week system design roadmap, and friends to keep you honest. Sign in to pick up exactly where you left off on any device.</p>
+      </div>
+    <ul class="features">
+        <li><span class="dot dot-learn"></span><div><b>90 Days DSA Calendar</b><span>Topic-wise problem sets with revision, breather and mock days.</span></div></li>
+        <li><span class="dot dot-revision"></span><div><b>System Design roadmap</b><span>Week-by-week concepts with a learn link for every topic.</span></div></li>
+        <li><span class="dot dot-breather"></span><div><b>Study with friends</b><span>Add friends by username and compare progress on a leaderboard.</span></div></li>
+        <li><span class="dot dot-mock"></span><div><b>Private by default</b><span>Your progress is yours. Applications never leave your device.</span></div></li>
+    </ul>
+    <div class="auth-slot" id="auth-slot"></div>
+  </section>
 
   <main class="wrap">
     <!-- 90-day calendar -->
@@ -74,7 +98,7 @@
       <div class="top">
         <span class="eyebrow">Study together</span>
         <h1>Friends</h1>
-        <p class="sub">Sign in to sync your progress across devices and see how your friends are doing. Friends see your study progress, never anything about your applications.</p>
+        <p class="sub">Add friends by username and see how everyone is doing. Friends see your study progress, never anything about your applications.</p>
       </div>
       <div id="friends-content"></div>
     </section>

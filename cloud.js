@@ -72,8 +72,10 @@ const Cloud = (() => {
     return saveSession(await call("/api/auth", { method: "POST", auth: false, body: { action: "signin", email, password } }));
   }
 
+  // Keeps "syncedUserId" on purpose: if someone else signs in next on this device,
+  // syncOnOpen sees a different account and replaces local progress instead of merging it.
   async function signOut() {
-    await chrome.storage.local.remove(["session", "profile", "syncedUserId", "lastSyncedAt"]);
+    await chrome.storage.local.remove(["session", "profile", "lastSyncedAt"]);
   }
 
   async function getMyProfile() {

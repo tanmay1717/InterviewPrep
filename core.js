@@ -195,8 +195,12 @@ async function syncOnOpen() {
     d = await getAll();
 
     if (d.syncedUserId !== session.user.id) {
+      // First sign-in here: keep progress made before signing in (merge with the account).
+      // But if this device last synced a *different* account, never mix that person's
+      // progress into this one - start from this account's own data instead.
+      const base = d.syncedUserId ? {} : d;
       await setKeys({
-        ...mergeProgress(d, (remote && remote.data) || {}),
+        ...mergeProgress(base, (remote && remote.data) || {}),
         syncedUserId: session.user.id,
         localUpdatedAt: new Date().toISOString()
       });

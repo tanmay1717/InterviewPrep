@@ -16,11 +16,50 @@ function showPage() {
 }
 
 async function renderAccount() {
-  const btn = $("account-btn");
-  const session = await Cloud.getSession();
   const { profile } = await getAll();
-  btn.textContent = session ? `@${(profile && profile.username) || "account"}` : "Sign in";
-  btn.classList.toggle("signed-in", !!session);
+  const btn = $("account-btn");
+  btn.textContent = `@${(profile && profile.username) || "account"}`;
+  btn.classList.add("signed-in");
+}
+
+// ---------- Sign-in gate ----------
+// Every page is per-account, so nothing is shown until someone signs in.
+function showAuth() {
+  document.body.classList.remove("booting");
+  document.body.classList.add("signed-out");
+  renderAuthBackground();
+  renderAuth($("auth-slot"));
+}
+
+// Decorative 90-day heatmap behind the sign-in box: one cell per calendar day, coloured by
+// day type, about two thirds "done" at varying intensity, with a few cells softly pulsing.
+function renderAuthBackground() {
+  const heat = $("auth-heat");
+  if (heat.childElementCount) return;
+  let html = "";
+  for (let d = 1; d <= DSA90.TOTAL; d++) {
+    const type = DSA90.DAYS[d].type;
+    const on = (d * 7) % 10 < 7;
+    const lvl = [30, 45, 62, 80][(d * 13) % 4];
+    const pulse = on && d % 9 === 4;
+    html += `<span class="heat-cell ${type} ${on ? "on" : ""} ${pulse ? "pulse" : ""}" style="--lvl:${lvl}%;--delay:${(d % 6) * 1.1}s"></span>`;
+  }
+  heat.innerHTML = html;
+}
+
+async function enterApp() {
+  document.body.classList.remove("booting", "signed-out");
+  $("auth-slot").innerHTML = "";
+  showPage();
+  await renderAll();
+}
+
+async function signOutToAuth() {
+  await Cloud.signOut();
+  friendsUi.open.clear();
+  addingDay = null;
+  history.replaceState(null, "", location.pathname);
+  showAuth();
 }
 
 // ---------- 90-day calendar ----------
@@ -175,7 +214,7 @@ const friendsUi = { mode: "signin", open: new Set() };
 async function renderFriends() {
   const el = $("friends-content");
   const session = await Cloud.getSession();
-  if (!session) return renderAuth(el);
+  if (!session) return showAuth();
 
   const { profile } = await getAll();
   const me = profile ? profile.username : session.user.email;
@@ -205,7 +244,7 @@ async function renderFriends() {
     </div>`;
   updateSyncLabel();
 
-  $("f-signout").onclick = async () => { await Cloud.signOut(); renderAll(); };
+  $("f-signout").onclick = signOutToAuth;
   $("f-refresh").onclick = async () => { await syncOnOpen(); renderAll(); };
   $("f-add").onsubmit = async (e) => {
     e.preventDefault();
@@ -228,6 +267,8 @@ function renderAuth(el) {
   const signup = friendsUi.mode === "signup";
   el.innerHTML = `
     <div class="panel auth">
+      <div class="auth-title">${signup ? "Create your account" : "Welcome back"}</div>
+      <p class="auth-sub">${signup ? "Pick a username - friends will add you by it." : "Sign in to see your calendar and progress."}</p>
       <div class="seg">
         <button data-mode="signin" class="${signup ? "" : "active"}">Sign in</button>
         <button data-mode="signup" class="${signup ? "active" : ""}">Create account</button>
@@ -252,7 +293,7 @@ function renderAuth(el) {
       if (signup) await Cloud.signUp($("a-email").value.trim(), $("a-pass").value, $("a-user").value);
       else await Cloud.signIn($("a-email").value.trim(), $("a-pass").value);
       await syncOnOpen();
-      await renderAll();
+      await enterApp();
     } catch (err) {
       msg.className = "msg err";
       msg.textContent = err.message;
@@ -468,6 +509,8 @@ function initTheme() {
 
 // ---------- Init ----------
 async function renderAll() {
+  // Session gone (signed out elsewhere or expired)? Back to the welcome screen.
+  if (!(await Cloud.getSession())) return showAuth();
   await renderAccount();
   await renderCalendar();
   await renderSystemDesign();
@@ -481,10 +524,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initTheme();
   initApplications();
   initResources();
-  showPage();
+  if (!(await Cloud.getSession())) return showAuth();
+  await enterApp();       // show this account's saved data straight away
+  await syncOnOpen();     // then pull the latest from the server
   await renderAll();
-  if (await Cloud.getSession()) {
-    await syncOnOpen();
-    await renderAll();
-  }
 });
