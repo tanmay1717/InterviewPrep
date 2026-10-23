@@ -22,13 +22,16 @@ if (!process.env.JWT_SECRET) {
 }
 
 const { setQueryFn } = await import("../lib/db.js");
-let dbLabel = "Neon (DATABASE_URL)";
+let dbLabel = "LIVE Neon database (DATABASE_URL) - real accounts, be careful";
+// Local development never touches the live database unless you explicitly ask for it
+// (npm run dev:neon). Otherwise .env's DATABASE_URL is ignored and a local Postgres is used.
+if (process.env.DEV_USE_NEON !== "1") delete process.env.DATABASE_URL;
 if (!process.env.DATABASE_URL) {
   const { PGlite } = await import("@electric-sql/pglite");
   const db = new PGlite(path.join(root, ".localdb"));
   await db.exec(fs.readFileSync(path.join(root, "db", "schema.sql"), "utf8"));
   setQueryFn(async (text, params) => (await db.query(text, params)).rows);
-  dbLabel = "local Postgres in .localdb/ (set DATABASE_URL in .env to use Neon)";
+  dbLabel = "local Postgres in .localdb/ (use `npm run dev:neon` for the live Neon database)";
 }
 
 execFileSync(process.execPath, [path.join(root, "scripts", "build-web.mjs")], {

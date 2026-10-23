@@ -393,16 +393,49 @@ async function removeCustomProblem(day, id) {
   await markChanged();
 }
 
-async function addCustomResource(group, name, link) {
+// shared: true -> friends see it in their "From friends" list (the server never sends private ones).
+async function addCustomResource(group, name, link, shared = false) {
   const url = safeUrl(link);
   if (!url) throw new Error("Enter a full link starting with http:// or https://");
   const title = String(name || "").trim() || new URL(url).hostname;
   const section = String(group || "").trim() || "My resources";
   const d = await getAll();
   const list = d.customResources || [];
-  list.push({ id: newId(), group: section.slice(0, 60), name: title.slice(0, 140), url });
+  if (list.some((r) => r.url === url)) throw new Error("That link is already in your resources");
+  list.push({ id: newId(), group: section.slice(0, 60), name: title.slice(0, 140), url, shared: !!shared });
   await setKeys({ customResources: list });
   await markChanged();
+}
+
+async function setResourceShared(id, shared) {
+  const d = await getAll();
+  await setKeys({ customResources: (d.customResources || []).map((r) => (r.id === id ? { ...r, shared: !!shared } : r)) });
+  await markChanged();
+}
+
+// Resources your accepted friends chose to share, merged by link:
+// [{ name, url, group, by: ["alice", "bob"] }]. Empty when signed out.
+async function loadFriendsSharedResources() {
+  const session = Cloud.isConfigured() ? await Cloud.getSession() : null;
+  if (!session) return [];
+  const [rows, progress] = await Promise.all([Cloud.listFriendships(), Cloud.friendsProgress()]);
+  const names = {};
+  rows.filter((r) => r.status === "accepted").forEach((r) => {
+    const other = r.requester === session.user.id ? r.addressee_profile : r.requester_profile;
+    if (other) names[other.id] = other.username;
+  });
+  const byUrl = new Map();
+  for (const p of progress) {
+    for (const r of (p.data && p.data.customResources) || []) {
+      const url = r && r.shared && safeUrl(r.url);
+      if (!url) continue;
+      const item = byUrl.get(url) || { name: String(r.name || url).slice(0, 140), url, group: String(r.group || "Shared").slice(0, 60), by: [] };
+      const who = names[p.user_id] || "a friend";
+      if (!item.by.includes(who)) item.by.push(who);
+      byUrl.set(url, item);
+    }
+  }
+  return [...byUrl.values()];
 }
 
 async function removeCustomResource(id) {
@@ -418,7 +451,7 @@ function allResources(customResources = []) {
   for (const r of customResources) {
     const url = safeUrl(r.url);
     if (!url) continue;
-    (groups[r.group] = groups[r.group] || []).push({ id: r.id, name: r.name, url });
+    (groups[r.group] = groups[r.group] || []).push({ id: r.id, name: r.name, url, shared: !!r.shared });
   }
   return groups;
 }

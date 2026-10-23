@@ -1,5 +1,5 @@
 // GET /api/progress            -> { data, updated_at } | null   (your own)
-// GET /api/progress?friends=1  -> [{ user_id, data, updated_at }]  (accepted friends only)
+// GET /api/progress?friends=1  -> [{ user_id, data, updated_at }]  (accepted friends only; only their shared resources)
 // PUT /api/progress { data, updated_at }
 import { q } from "../lib/db.js";
 import { requireUser } from "../lib/auth.js";
@@ -21,6 +21,12 @@ export default route(async (req, res) => {
               or (f.addressee = $1 and f.requester = p.user_id))`,
         [userId]
       );
+      // Friends only receive resources their owner chose to share.
+      for (const row of rows) {
+        if (row.data && Array.isArray(row.data.customResources)) {
+          row.data.customResources = row.data.customResources.filter((r) => r && r.shared === true);
+        }
+      }
       return res.json(rows);
     }
     const rows = await q("select data, updated_at from progress where user_id = $1", [userId]);

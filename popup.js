@@ -799,12 +799,20 @@ async function renderStudyPlan() {
 // ---------- Resources ----------
 async function renderResources() {
   const { customResources = [] } = await getAll();
-  $("resources-list").innerHTML = Object.entries(allResources(customResources)).map(([group, links]) => `
+  const own = Object.entries(allResources(customResources)).map(([group, links]) => `
     <div class="res-group">
       <h3>${esc(group)}</h3>
-      ${links.map((l) => `<a class="res-link" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}</a>`).join("")}
+      ${links.map((l) => `<a class="res-link" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}${
+        l.id ? `<span class="res-tag ${l.shared ? "shared" : ""}">${l.shared ? "shared" : "private"}</span>` : ""}</a>`).join("")}
     </div>
   `).join("");
+  let fromFriends = [];
+  try { fromFriends = await loadFriendsSharedResources(); } catch { /* offline: just show your own */ }
+  $("resources-list").innerHTML = (fromFriends.length ? `
+    <div class="res-group">
+      <h3>From friends</h3>
+      ${fromFriends.map((r) => `<a class="res-link" href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}<span class="res-by">@${r.by.map(esc).join(", @")}</span></a>`).join("")}
+    </div>` : "") + own;
 }
 
 // ---------- Init ----------

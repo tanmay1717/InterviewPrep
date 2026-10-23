@@ -135,7 +135,7 @@
       <div class="top">
         <span class="eyebrow">Free material</span>
         <h1>Resources</h1>
-        <p class="sub">Hand-picked links for coding, design, and company-wise question lists. Add your own favourites too - they sync with your account.</p>
+        <p class="sub">Hand-picked links for coding, design, and company-wise question lists. Add your own favourites too - share them with friends, or keep them private.</p>
       </div>
       <form class="panel res-form" id="res-form">
         <div class="label-sm">Add a resource</div>
@@ -145,9 +145,11 @@
           <input id="res-url" type="url" placeholder="https://..." aria-label="Link" required />
           <button class="btn btn-primary" type="submit">Add</button>
         </div>
+        <label class="share-check"><input type="checkbox" id="res-share" checked /> Share with friends</label>
         <datalist id="res-groups"></datalist>
         <div class="msg" id="res-msg"></div>
       </form>
+      <div id="friends-res"></div>
       <div id="resources-content" class="res-grid"></div>
     </section>
 

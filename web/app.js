@@ -494,11 +494,52 @@ async function renderResources() {
     <div class="panel"><h3>${esc(group)}</h3>
       ${links.map((l) => `<div class="res-item">
         <a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name)}${l.id ? ` <span class="yours">added by you</span>` : ""}</a>
-        ${l.id ? `<button class="remove-x" data-remove-res="${esc(l.id)}" title="Remove" aria-label="Remove ${esc(l.name)}">×</button>` : ""}
+        ${l.id ? `<span class="res-actions">
+          <button class="share-toggle ${l.shared ? "on" : ""}" data-share-res="${esc(l.id)}" data-shared="${l.shared ? 1 : 0}"
+            title="${l.shared ? "Friends can see this - click to make it private" : "Only you can see this - click to share with friends"}">${l.shared ? "Shared" : "Private"}</button>
+          <button class="remove-x" data-remove-res="${esc(l.id)}" title="Remove" aria-label="Remove ${esc(l.name)}">×</button>
+        </span>` : ""}
       </div>`).join("")}
     </div>`).join("");
-  $("resources-content").querySelectorAll("[data-remove-res]").forEach((b) => (b.onclick = async () => {
+  const root = $("resources-content");
+  root.querySelectorAll("[data-remove-res]").forEach((b) => (b.onclick = async () => {
     await removeCustomResource(b.dataset.removeRes);
+    renderResources();
+  }));
+  root.querySelectorAll("[data-share-res]").forEach((b) => (b.onclick = async () => {
+    await setResourceShared(b.dataset.shareRes, b.dataset.shared !== "1");
+    renderResources();
+  }));
+  renderFriendsResources(customResources);
+}
+
+// "From friends": links your friends chose to share, with a Save button to keep a private copy.
+async function renderFriendsResources(customResources) {
+  const box = $("friends-res");
+  let shared;
+  try {
+    shared = await loadFriendsSharedResources();
+  } catch {
+    box.innerHTML = "";
+    return;
+  }
+  const mine = new Set(customResources.map((r) => r.url));
+  box.innerHTML = `
+    <div class="panel friends-res">
+      <h3>From friends</h3>
+      ${shared.length ? `<div class="res-list">${shared.map((r) => `
+        <div class="res-item">
+          <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.name)}<span class="by">@${r.by.map(esc).join(", @")}</span><span class="group">${esc(r.group)}</span></a>
+          <button class="btn save-btn" data-save-url="${esc(r.url)}" ${mine.has(r.url) ? "disabled" : ""}>${mine.has(r.url) ? "Saved" : "Save"}</button>
+        </div>`).join("")}</div>`
+        : `<p class="muted" style="margin:0;font-size:13px">Nothing shared yet. When friends share a resource, it shows up here${
+          customResources.some((r) => r.shared) ? "" : " - and links you share show up for them"}.</p>`}
+    </div>`;
+  box.querySelectorAll("[data-save-url]").forEach((b) => (b.onclick = async () => {
+    const r = shared.find((x) => x.url === b.dataset.saveUrl);
+    try {
+      await addCustomResource(r.group, r.name, r.url, false);
+    } catch { /* already saved */ }
     renderResources();
   }));
 }
@@ -508,10 +549,11 @@ function initResources() {
     e.preventDefault();
     const msg = $("res-msg");
     try {
-      await addCustomResource($("res-group").value, $("res-name").value, $("res-url").value);
+      const share = $("res-share").checked;
+      await addCustomResource($("res-group").value, $("res-name").value, $("res-url").value, share);
       e.target.reset();
       msg.className = "msg ok";
-      msg.textContent = "Added.";
+      msg.textContent = share ? "Added and shared with your friends." : "Added - only you can see it.";
       renderResources();
     } catch (err) {
       msg.className = "msg err";
