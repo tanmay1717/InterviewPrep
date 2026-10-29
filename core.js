@@ -358,14 +358,36 @@ function titleFromUrl(url) {
   return best ? titleFromSlug(best) : u.hostname.replace(/^www\./, "");
 }
 
-async function addCustomProblem(day, text, diff) {
+// shared: true -> friends see it on the same day of their calendar (the server never sends private ones).
+async function addCustomProblem(day, text, diff, shared = false) {
   const parsed = parseProblemInput(text);
   if (!parsed) throw new Error("Enter a problem name or an http(s) link");
+  return addCustomProblemItem(day, parsed, diff, shared);
+}
+
+// Copies a friend's shared question into your own day (as private).
+async function addFriendQuestion(day, q) {
+  const url = safeUrl(q.url);
+  if (!url) throw new Error("That link isn't valid");
+  return addCustomProblemItem(day, { ...(q.slug ? { slug: q.slug } : {}), n: String(q.n || url).slice(0, 120), url }, q.d, false);
+}
+
+async function setQuestionShared(day, id, shared) {
+  const d = await getAll();
+  const custom = d.customProblems || {};
+  custom[day] = (custom[day] || []).map((p) => (p.id === id ? { ...p, shared: !!shared } : p));
+  await setKeys({ customProblems: custom });
+  await markChanged();
+}
+
+async function addCustomProblemItem(day, parsed, diff, shared) {
   const d = await getAll();
   const custom = d.customProblems || {};
   const existing = dayProblemKeys(day, custom);
-  if (parsed.slug && existing.includes(parsed.slug)) throw new Error("That problem is already on this day");
-  const item = { id: newId(), ...parsed, d: ["E", "M", "H"].includes(diff) ? diff : "M" };
+  if ((parsed.slug && existing.includes(parsed.slug)) || (custom[day] || []).some((p) => p.url === parsed.url)) {
+    throw new Error("That problem is already on this day");
+  }
+  const item = { id: newId(), ...parsed, d: ["E", "M", "H"].includes(diff) ? diff : "M", shared: !!shared };
   custom[day] = [...(custom[day] || []), item];
   const updates = { customProblems: custom };
   // Adding to a finished day counts it as solved straight away.
@@ -413,29 +435,49 @@ async function setResourceShared(id, shared) {
   await markChanged();
 }
 
-// Resources your accepted friends chose to share, merged by link:
-// [{ name, url, group, by: ["alice", "bob"] }]. Empty when signed out.
-async function loadFriendsSharedResources() {
+// What your accepted friends chose to share: resources (merged by link) and calendar questions
+// (by day, merged by problem). Each item lists who shared it in "by". Empty when signed out.
+async function loadFriendsShared() {
+  const empty = { resources: [], questions: {} };
   const session = Cloud.isConfigured() ? await Cloud.getSession() : null;
-  if (!session) return [];
+  if (!session) return empty;
   const [rows, progress] = await Promise.all([Cloud.listFriendships(), Cloud.friendsProgress()]);
   const names = {};
   rows.filter((r) => r.status === "accepted").forEach((r) => {
     const other = r.requester === session.user.id ? r.addressee_profile : r.requester_profile;
     if (other) names[other.id] = other.username;
   });
-  const byUrl = new Map();
+  const resources = new Map();
+  const questions = {};
   for (const p of progress) {
+    const who = names[p.user_id] || "a friend";
     for (const r of (p.data && p.data.customResources) || []) {
       const url = r && r.shared && safeUrl(r.url);
       if (!url) continue;
-      const item = byUrl.get(url) || { name: String(r.name || url).slice(0, 140), url, group: String(r.group || "Shared").slice(0, 60), by: [] };
-      const who = names[p.user_id] || "a friend";
+      const item = resources.get(url) || { name: String(r.name || url).slice(0, 140), url, group: String(r.group || "Shared").slice(0, 60), by: [] };
       if (!item.by.includes(who)) item.by.push(who);
-      byUrl.set(url, item);
+      resources.set(url, item);
+    }
+    for (const [day, list] of Object.entries((p.data && p.data.customProblems) || {})) {
+      if (!DSA90.DAYS[day] || !Array.isArray(list)) continue;
+      for (const q of list) {
+        const url = q && q.shared && safeUrl(q.url);
+        if (!url) continue;
+        const key = q.slug || url;
+        const byKey = (questions[day] = questions[day] || {});
+        const item = byKey[key] || { n: String(q.n || url).slice(0, 120), url, d: ["E", "M", "H"].includes(q.d) ? q.d : "M", ...(q.slug ? { slug: q.slug } : {}), by: [] };
+        if (!item.by.includes(who)) item.by.push(who);
+        byKey[key] = item;
+      }
     }
   }
-  return [...byUrl.values()];
+  const byDay = {};
+  for (const [day, items] of Object.entries(questions)) byDay[day] = Object.values(items);
+  return { resources: [...resources.values()], questions: byDay };
+}
+
+async function loadFriendsSharedResources() {
+  return (await loadFriendsShared()).resources;
 }
 
 async function removeCustomResource(id) {

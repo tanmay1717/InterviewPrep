@@ -92,10 +92,25 @@ async function signOutToAuth() {
 
 // ---------- 90-day calendar ----------
 let addingDay = null; // day whose "add question" form is open
+
+// Friends' shared questions/resources, fetched at most once a minute (the calendar re-renders on every tick).
+let friendsSharedCache = { at: 0, data: { resources: [], questions: {} } };
+async function friendsShared(force = false) {
+  if (!force && Date.now() - friendsSharedCache.at < 60_000) return friendsSharedCache.data;
+  try {
+    friendsSharedCache = { at: Date.now(), data: await loadFriendsShared() };
+  } catch { /* offline: keep what we had */ }
+  return friendsSharedCache.data;
+}
+
 async function renderCalendar() {
   const data = await getAll();
   const progress = data.dayProgress || {};
   const custom = data.customProblems || {};
+  const fromFriends = (await friendsShared()).questions;
+  // A friend's question is "already mine" if the same problem is on that day (built-in or added by me).
+  const onMyDay = (d, q) => (DSA90.DAYS[d].problems || []).some((p) => q.slug && p.slug === q.slug)
+    || (custom[d] || []).some((p) => (q.slug && p.slug === q.slug) || p.url === q.url);
   const s = computeStats(shareData(data));
   const next = nextDay(progress);
 
@@ -119,11 +134,18 @@ async function renderCalendar() {
           <div class="pattern"><b>Pattern:</b> ${res
             ? `<a href="${res}" target="_blank" rel="noopener">${esc(info.pattern)}</a>`
             : esc(info.pattern)}</div>
-          ${info.problems || custom[d] ? `<ul class="problems">${(info.problems || []).map((p) => `
+          ${info.problems || custom[d] || fromFriends[d] ? `<ul class="problems">${(info.problems || []).map((p) => `
             <li><a href="${LC}${p.slug}/" target="_blank" rel="noopener">${esc(p.n)}</a><span class="diff diff-${p.d}">${p.d}</span></li>`).join("")}
             ${(custom[d] || []).map((p) => `
             <li class="custom"><a href="${esc(p.url)}" target="_blank" rel="noopener" title="Added by you">${esc(p.n)}</a><span class="diff diff-${p.d}">${p.d}</span>
+              <button class="q-share ${p.shared ? "on" : ""}" data-share-q="${esc(p.id)}" data-day="${d}" data-shared="${p.shared ? 1 : 0}"
+                title="${p.shared ? "Friends see this on their Day " + d + " - click to make it private" : "Only you see this - click to share with friends"}">${p.shared ? "shared" : "private"}</button>
               <button class="remove-x" data-remove-q="${esc(p.id)}" data-day="${d}" title="Remove this question" aria-label="Remove ${esc(p.n)}">×</button></li>`).join("")}
+            ${(fromFriends[d] || []).map((q, i) => `
+            <li class="from-friend"><a href="${esc(q.url)}" target="_blank" rel="noopener" title="Shared by @${esc(q.by.join(", @"))}">${esc(q.n)}</a><span class="diff diff-${q.d}">${q.d}</span>
+              <span class="q-by">@${q.by.map(esc).join(", @")}</span>
+              ${onMyDay(d, q) ? `<span class="q-have" title="Already on your day">✓</span>`
+                : `<button class="q-copy" data-copy-q="${i}" data-day="${d}" title="Add to my Day ${d}" aria-label="Add ${esc(q.n)} to my day">+</button>`}</li>`).join("")}
           </ul>` : ""}
           ${info.note ? `<div class="note">${esc(info.note)}</div>` : ""}
           ${addingDay === d ? `
@@ -134,6 +156,7 @@ async function renderCalendar() {
                 <button class="btn btn-primary btn-xs" type="submit">Add</button>
                 <button class="btn btn-xs" type="button" data-cancel-q title="Cancel" aria-label="Cancel">✕</button>
               </div>
+              <label class="add-q-share"><input type="checkbox" name="share" checked /> Share with friends</label>
               <div class="add-q-msg"></div>
             </form>` : `<button class="add-q" data-add-q="${d}">+ Add question</button>`}
           <label class="check-row"><input type="checkbox" data-day="${d}" ${progress[d] ? "checked" : ""} /> Done</label>
@@ -161,7 +184,7 @@ async function renderCalendar() {
   cal.querySelectorAll(".add-q-form").forEach((form) => (form.onsubmit = async (e) => {
     e.preventDefault();
     try {
-      await addCustomProblem(form.dataset.day, form.q.value, form.diff.value);
+      await addCustomProblem(form.dataset.day, form.q.value, form.diff.value, form.share.checked);
       addingDay = null;
       renderCalendar();
     } catch (err) {
@@ -170,6 +193,16 @@ async function renderCalendar() {
   }));
   cal.querySelectorAll("[data-remove-q]").forEach((b) => (b.onclick = async () => {
     await removeCustomProblem(b.dataset.day, b.dataset.removeQ);
+    renderCalendar();
+  }));
+  cal.querySelectorAll("[data-share-q]").forEach((b) => (b.onclick = async () => {
+    await setQuestionShared(b.dataset.day, b.dataset.shareQ, b.dataset.shared !== "1");
+    renderCalendar();
+  }));
+  cal.querySelectorAll("[data-copy-q]").forEach((b) => (b.onclick = async () => {
+    const q = (fromFriends[b.dataset.day] || [])[Number(b.dataset.copyQ)];
+    if (!q) return;
+    try { await addFriendQuestion(b.dataset.day, q); } catch { /* already there */ }
     renderCalendar();
   }));
 }
@@ -518,7 +551,7 @@ async function renderFriendsResources(customResources) {
   const box = $("friends-res");
   let shared;
   try {
-    shared = await loadFriendsSharedResources();
+    shared = (await friendsShared(true)).resources;
   } catch {
     box.innerHTML = "";
     return;

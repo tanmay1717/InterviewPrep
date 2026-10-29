@@ -391,6 +391,42 @@ h1 { font-size: 28px; margin: 0; font-weight: 700; letter-spacing: -0.01em; }
 .add-q-msg { font-size: 11px; color: var(--mock); }
 .add-q-msg:empty { display: none; }
 
+/* ---- Shared calendar questions ---- */
+.q-share {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+  padding: 1px 5px;
+  border-radius: 99px;
+  cursor: pointer;
+}
+.q-share:hover { background: var(--surface-2); color: var(--text); }
+.q-share.on { color: var(--breather); background: var(--breather-bg); }
+.problems li.from-friend a { border-bottom-style: dotted; border-bottom-color: var(--breather); }
+.q-by { font-size: 10.5px; font-weight: 600; color: var(--breather); }
+.q-copy {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.q-copy:hover { border-color: var(--learn); color: var(--learn); }
+.q-have { font-size: 11px; color: var(--e); }
+.add-q-share { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-dim); cursor: pointer; }
+.add-q-share input { width: auto; padding: 0; margin: 0; accent-color: var(--learn); }
+
 /* ---- System design ---- */
 .topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
 .topic-card { min-height: 92px; }

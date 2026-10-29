@@ -604,3 +604,10 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .res-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-soft); margin-left: 6px; }
 .res-tag.shared { color: var(--breather); }
 .res-by { font-size: 11px; color: var(--breather); margin-left: 6px; }
+
+/* Friends' shared questions on the Home day card */
+.day-problems li.from-friend a { border-bottom-style: dotted; border-bottom-color: var(--breather); }
+.q-by { font-size: 10.5px; font-weight: 600; color: var(--breather); }
+.q-copy { border: 1px solid var(--border); background: var(--surface); color: var(--ink); width: 18px; height: 18px; padding: 0; line-height: 1; border-radius: 5px; cursor: pointer; font-size: 12px; }
+.q-copy:hover { border-color: var(--accent); color: var(--accent); }
+.q-have { font-size: 11px; color: var(--easy); }

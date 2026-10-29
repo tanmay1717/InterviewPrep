@@ -74,8 +74,8 @@ function nextDayCard(data) {
         <span class="day-tag tag-${info.type}">${DAY_TYPE_LABEL[info.type]}</span>
       </div>
       <div class="day-pattern"><b>Pattern:</b> ${res ? `<a href="${esc(res)}" target="_blank" rel="noopener">${esc(info.pattern)}</a>` : esc(info.pattern)}</div>
-      ${problems.length ? `<ul class="day-problems">${problems.map((p) => `
-        <li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.n)}</a><span class="diff diff-${p.d}">${p.d}</span></li>`).join("")}</ul>` : ""}
+      <ul class="day-problems" id="next-day-problems" data-day="${day}">${problems.map((p) => `
+        <li><a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.n)}</a><span class="diff diff-${p.d}">${p.d}</span></li>`).join("")}</ul>
       ${info.note ? `<div class="day-note">${esc(info.note)}</div>` : ""}
       <div class="day-foot">
         <label><input type="checkbox" id="next-day-done" data-day="${day}" /> Mark day done</label>
@@ -133,6 +133,27 @@ async function renderDashboard() {
     renderDashboard();
     renderCoding();
   });
+  appendFriendsQuestions(data);
+}
+
+// Adds questions friends shared for this day to the Home card, each with a "+" to add it to your day.
+async function appendFriendsQuestions(data) {
+  const list = $("next-day-problems");
+  if (!list) return;
+  const day = list.dataset.day;
+  let shared;
+  try { shared = (await loadFriendsShared()).questions[day] || []; } catch { return; }
+  const mine = [...(DSA90.DAYS[day].problems || []), ...((data.customProblems || {})[day] || [])];
+  const have = (q) => mine.some((p) => (q.slug && p.slug === q.slug) || (p.url && p.url === q.url));
+  if (!$("next-day-problems") || !shared.length) return; // re-rendered meanwhile, or nothing shared
+  list.insertAdjacentHTML("beforeend", shared.map((q, i) => `
+    <li class="from-friend"><a href="${esc(q.url)}" target="_blank" rel="noopener">${esc(q.n)}</a><span class="diff diff-${q.d}">${q.d}</span>
+      <span class="q-by">@${q.by.map(esc).join(", @")}</span>
+      ${have(q) ? `<span class="q-have" title="Already on your day">✓</span>` : `<button class="q-copy" data-copy-q="${i}" title="Add to my day">+</button>`}</li>`).join(""));
+  list.querySelectorAll("[data-copy-q]").forEach((b) => (b.onclick = async () => {
+    try { await addFriendQuestion(day, shared[Number(b.dataset.copyQ)]); } catch { /* already there */ }
+    renderDashboard();
+  }));
 }
 
 // ---------- Practice: coding ----------
